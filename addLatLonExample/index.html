@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<html><head>
+<meta http-equiv="content-type" content="text/html; charset=UTF-8"><meta charset="utf-8">
+<title>add latlon example</title>
+</head><body>
+<textarea style="width:100%; height:500px;" id='content'>
+</textarea>
+
+<script src="d3.js"></script>
+<script>
+var alias = {
+	"Cote d'Ivoire": 'Ivory Coast',
+	"Congo, Dem. Rep.": 'Democratic Republic of the Congo',
+	"Congo, Rep.": 'Republic of the Congo',
+	"Kyrgyz Republic": 'Kyrgyzstan',
+	"Lao": 'Laos',
+	"Macedonia, FYR": 'Macedonia',
+	"Myanmar": 'Myanmar [Burma]',
+	"West Bank and Gaza": '',
+	"Slovak Republic": 'Slovakia',
+	"Timor-Leste": 'East Timor'
+};
+var missingArea = {
+	"West Bank and Gaza": { lat: 31.5, lng: 34.46667}
+};
+d3.csv('countryInfo.csv', function (latlon) {
+	d3.csv('dont-panic-poverty.csv', function (data) {
+	//d3.csv('dont-panic-poverty-2000.csv', function (data) {
+	//d3.csv('dont-panic-poverty-properties.csv', function (data) {
+		// console.log(latlon);
+		// console.log(data);
+
+		// get missing area
+		var countryHash = {};
+		var need = {}
+		latlon.forEach(function (d) {
+			countryHash[d.countryName] = d;
+		});
+		data.forEach(function (d) {
+			if (!countryHash[d['geo.name']]) {
+				need[d['geo.name']] = 1;
+			}
+		});
+
+		console.log('need >> ');
+		console.log(Object.keys(need));
+
+		// add lat lon
+		data.forEach(function (d) {
+			var name = d['geo.name'];
+			if (countryHash[name]) {
+				//console.log(countryHash[name]);
+				d.lat = countryHash[name].lat;
+				d.lng = countryHash[name].lng;
+			} else if (alias[name]) {
+				d.lat = countryHash[alias[name]].lat;
+				d.lng = countryHash[alias[name]].lng;
+			} else {
+				d.lat = missingArea[name].lat;
+				d.lng = missingArea[name].lng;
+			}
+		});
+
+		// output
+		var columns = 'geo,geo.name,geo.cat,geo.region,time,pop,gdp_per_cap,gini,u5mr,lat,lng';
+		//var columns = 'geo,geo.name,geo.cat,geo.region,lat,lng';
+		//var columns = 'geo,time,pop,gdp_per_cap,gini,u5mr,lat,lng';
+		var columnsArray = columns.split(',');
+		var txt = columns;
+		txt += '\n' + data.map(function (d) {
+			return columnsArray.map(function (c) {
+				return d[c];
+			}).join(',');
+		}).join('\n');
+
+		document.getElementById('content').innerHTML = txt;
+
+		//console.log(data);
+	});
+});
+
+</script>
+
+</body></html>
